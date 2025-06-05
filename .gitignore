@@ -6,7 +6,7 @@
 *.dylib
 *.ini
 /utils/setting.go
-
+static
 # Test binary, built with `go test -c`
 *.test
 
