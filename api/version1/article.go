@@ -117,6 +117,19 @@ func EditArticle(c *gin.Context) {
 	})
 }
 
+//更新点击量
+
+func UpdateView(c *gin.Context) {
+	var data model.Article
+	id, _ := strconv.Atoi(c.Param("id"))
+	_ = c.ShouldBindJSON(&data)
+	code := model.UpdateView(id, &data)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  code,
+		"message": errmsg.GetErrMsg(code),
+	})
+}
+
 //删除文章
 
 func DeleteArticle(c *gin.Context) {

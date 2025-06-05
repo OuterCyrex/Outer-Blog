@@ -19,6 +19,7 @@ type Article struct {
 	Content  string   `json:"content" gorm:"type:longtext;not null"`
 	HTML     string   `json:"html" gorm:"type:longtext;not null"`
 	Img      string   `json:"img" gorm:"type:varchar(200)"`
+	View     int      `json:"view" gorm:"type:int;"`
 }
 
 //查询分类下的所有文章
@@ -32,11 +33,11 @@ func GetArticleByCategory(pageSize int, pageNum int, cid int) ([]Article, int, i
 	}
 	var cateArtList []Article
 	if cate.ID == 0 {
-		db.Order("updated_at DESC").Preload("Tag").Preload("Category").Where("NOT ID = 1").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&cateArtList)
+		db.Order("created_at DESC").Preload("Tag").Preload("Category").Where("NOT ID = 1").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&cateArtList)
 		db.Model(&cateArtList).Where("NOT ID = 1").Count(&total)
 		return cateArtList, errmsg.SUCCESS, total
 	}
-	result = db.Order("updated_at DESC").Preload("Tag").Preload("Category").Where("NOT ID = 1").Limit(pageSize).Offset((pageNum-1)*pageSize).Where("Cid = ?", cid).Find(&cateArtList)
+	result = db.Order("created_at DESC").Preload("Tag").Preload("Category").Where("NOT ID = 1").Limit(pageSize).Offset((pageNum-1)*pageSize).Where("Cid = ?", cid).Find(&cateArtList)
 	db.Model(&cateArtList).Where("NOT ID = 1").Where("Cid = ?", cid).Count(&total)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -57,7 +58,7 @@ func GetArticleByTag(pageSize int, pageNum int, tid int) ([]Article, int, int64)
 		return []Article{}, errmsg.ERROR_TAG_NOT_EXIST, 0
 	}
 	var tagArtList []Article
-	result = db.Order("updated_at DESC").Preload("Tag").Preload("Category").Where("NOT ID = 1").Limit(pageSize).Offset((pageNum-1)*pageSize).Where("Tid = ?", tid).Find(&tagArtList)
+	result = db.Order("created_at DESC").Preload("Tag").Preload("Category").Where("NOT ID = 1").Limit(pageSize).Offset((pageNum-1)*pageSize).Where("Tid = ?", tid).Find(&tagArtList)
 	db.Model(&tagArtList).Where("NOT ID = 1").Where("Tid = ?", tid).Count(&total)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -89,7 +90,7 @@ func GetArticle(title string, pageSize int, pageNum int) ([]Article, int, int64)
 	var total int64
 	var err error
 	if title != "" {
-		err = db.Order("updated_at DESC").Preload("Category").Preload("Tag").Where("title LIKE ? && NOT id = 1", title+"%").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&art).Error
+		err = db.Order("created_at DESC").Preload("Category").Preload("Tag").Where("title LIKE ? && NOT id = 1", title+"%").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&art).Error
 		db.Model(&art).Where("title LIKE ? AND NOT id = 1", title+"%").Count(&total)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			fmt.Printf("文章查询出错,%v", err)
@@ -97,7 +98,7 @@ func GetArticle(title string, pageSize int, pageNum int) ([]Article, int, int64)
 		}
 		return art, errmsg.SUCCESS, total
 	} else {
-		err = db.Order("updated_at DESC").Preload("Category").Preload("Tag").Where("NOT id = 1").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&art).Error
+		err = db.Order("created_at DESC").Preload("Category").Preload("Tag").Where("NOT id = 1").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&art).Error
 		db.Model(&art).Where("NOT id = 1").Count(&total)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			fmt.Printf("文章查询出错,%v", err)
@@ -110,6 +111,7 @@ func GetArticle(title string, pageSize int, pageNum int) ([]Article, int, int64)
 //添加文章
 
 func CreateArticle(data *Article) int {
+	data.View = 0
 	err := db.Create(&data).Error
 	if err != nil {
 		return errmsg.ERROR
@@ -128,6 +130,22 @@ func EditArticle(id int, data *Article) int {
 	maps["content"] = data.Content
 	maps["img"] = data.Img
 	maps["html"] = data.HTML
+	result := db.Model(&Article{}).Where("id = ?", id).Updates(maps)
+	if result.Error != nil {
+		return errmsg.ERROR
+	}
+	if result.RowsAffected == 0 {
+		return errmsg.ERROR_ARTICLE_NOT_EXIST
+	}
+	fmt.Println(result.RowsAffected)
+	return errmsg.SUCCESS
+}
+
+//更新点击量
+
+func UpdateView(id int, data *Article) int {
+	var maps = make(map[string]interface{})
+	maps["view"] = data.View
 	result := db.Model(&Article{}).Where("id = ?", id).Updates(maps)
 	if result.Error != nil {
 		return errmsg.ERROR

@@ -41,9 +41,9 @@ func CheckUpCategory(id uint, name string) int {
 	fmt.Println(id, name)
 	db.Select("id").Where("name = ?", name).First(&cate)
 	if cate.ID == id || cate.ID <= 0 {
-		return errmsg.ERROR_CATEGORY_NOT_EXIST
+		return errmsg.SUCCESS
 	}
-	return errmsg.SUCCESS
+	return errmsg.ERROR_CATEGORY_NOT_EXIST
 }
 
 //新增分类

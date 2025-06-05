@@ -42,9 +42,9 @@ func CheckUpTag(id uint, name string) int {
 	var tag Tag
 	db.Select("id").Where("name = ?", name).First(&tag)
 	if tag.ID == id || tag.ID <= 0 {
-		return errmsg.ERROR_TAG_USED
+		return errmsg.SUCCESS
 	}
-	return errmsg.SUCCESS
+	return errmsg.ERROR_TAG_USED
 }
 
 //新增标签

@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-func InitRouter() {
+func InitRouter(withTLS bool) {
 	gin.SetMode(utils.AppMode)
 	r := gin.New()
 	r.Use(middleware.Logger())
@@ -63,6 +63,11 @@ func InitRouter() {
 
 		//Comments模块的router接口
 		auth.DELETE("comment/:id", version1.DeleteComment)
+
+		//Tag模块的router接口
+		auth.POST("tag/add", version1.AddTag)
+		auth.PUT("tag/:id", version1.EditTag)
+		auth.DELETE("tag/:id", version1.DeleteTag)
 	}
 
 	router := r.Group("api/v1")
@@ -70,8 +75,8 @@ func InitRouter() {
 		//用户接口
 		router.GET("users", version1.GetUser)
 		router.GET("user/:id", version1.GetUserInfo)
-		router.POST("user/add", version1.AddUser)
 		router.GET("profile/:id", version1.GetProfile)
+		router.POST("user/add", version1.AddUser)
 		//分类接口
 		router.GET("categories", version1.GetCategory)
 		router.GET("category/:id", version1.SearchCategory)
@@ -79,6 +84,8 @@ func InitRouter() {
 		router.GET("articles", version1.GetArticle)
 		router.GET("article/:id", version1.SearchArticle)
 		router.GET("article/category/:id", version1.GetArticleByCategory)
+		router.GET("article/tag/:id", version1.GetArticleByTag)
+		router.PUT("article/view/:id", version1.UpdateView)
 
 		//评论接口
 		router.GET("comment/:id", version1.GetCommentsByArticle)
@@ -92,7 +99,17 @@ func InitRouter() {
 
 		//友链接口
 		router.GET("friend", version1.GetFriendLink)
+
+		//标签接口
+		router.GET("tag", version1.GetTag)
+		router.GET("tag/:id", version1.SearchTag)
+		router.GET("tag/category/:id", version1.GetTagByCategory)
 	}
-	err := r.Run(utils.HttpPort)
+	var err error
+	if withTLS {
+		err = r.RunTLS(utils.HttpPort, utils.CertFile, utils.KeyFile)
+	} else {
+		err = r.Run(utils.HttpPort)
+	}
 	fmt.Printf("routers出错，%v", err)
 }

@@ -23,6 +23,9 @@ var (
 	SecretKey string
 	Bucket    string
 	ImgServer string
+
+	CertFile string
+	KeyFile  string
 )
 
 // 从ini文件中获取参数
@@ -34,6 +37,7 @@ func init() {
 	LoadServer(file)
 	LoadDataBase(file)
 	LoadImgServer(file)
+	LoadTLS(file)
 }
 
 // 使用ini库 将设置的参数与变量匹配
@@ -58,5 +62,10 @@ func LoadImgServer(file *ini.File) {
 	AccessKey = file.Section("img").Key("AccessKey").MustString("OuUTP7P80mLqYTb9tawMqKX0d_S0vb9fu14w63m2")
 	SecretKey = file.Section("img").Key("SecretKey").MustString("qdHc65mccSF4ajgcDq9q-EUdgdXqXhViHA5G1bxB")
 	Bucket = file.Section("img").Key("Bucket").MustString("outercyrex-blog")
-	ImgServer = file.Section("img").Key("ImgServer").MustString("http://shwfbbqxt.hd-bkt.clouddn.com/")
+	ImgServer = file.Section("img").Key("ImgServer").MustString("http://cdn.outercyrex.top/")
+}
+
+func LoadTLS(file *ini.File) {
+	CertFile = file.Section("tls").Key("CertFile").MustString("outercyrex.top_nginx/outercyrex.top_bundle.crt")
+	KeyFile = file.Section("tls").Key("KeyFile").MustString("outercyrex.top_nginx/outercyrex.top.key")
 }
